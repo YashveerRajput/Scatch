@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const db = require("./config/mongoose-connection")
 const expressSession = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash")
 
 require("dotenv").config();
@@ -18,6 +19,13 @@ app.use(
     resave:false,
     saveUninitialized:false,
     secret : process.env.EXPRESS_SESSION_SECRET,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/scatch",
+      touchAfter: 24 * 3600, // lazy session update (seconds)
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+    }
   })
 )
 app.use(flash());

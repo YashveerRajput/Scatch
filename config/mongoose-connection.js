@@ -4,21 +4,23 @@ const dbgr = require("debug")("development:mongoose")
 
 const config = require('config')
 
+// MongoDB connection - works for both local development and cloud (Vercel)
+const mongoURI = process.env.MONGODB_URI 
+  ? `${process.env.MONGODB_URI}/scatch`  // Cloud (MongoDB Atlas)
+  : `${config.get("MONGODB_URI")}/scatch`; // Local development
+
 mongoose
-
-
-
 //pehle mongoose connect krne bolega
-//yeh waala sirf local server connect krne k liye hota hai
-.connect(`${config.get("MONGODB_URI")}/scatch`)
+.connect(mongoURI)
 
 //agr connect hogya then
 .then(function(){
-    dbgr("connected")
+    dbgr("connected to MongoDB")
 })
 
 //agar connect nahi ho rha hai
 .catch(function(err){
+    console.error("MongoDB connection error:", err);
     dbgr(err);                                   
 })
 
