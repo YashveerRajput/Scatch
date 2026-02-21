@@ -10,22 +10,32 @@ if (process.env.MONGODB_URI) {
   mongoURI = `${process.env.MONGODB_URI}/scatch`;
 } else {
   // Local development - use config file
-  const config = require('config');
-  mongoURI = `${config.get("MONGODB_URI")}/scatch`;
+  try {
+    const config = require('config');
+    mongoURI = `${config.get("MONGODB_URI")}/scatch`;
+  } catch (err) {
+    console.error("Config error - MongoDB URI not found");
+    mongoURI = "mongodb://127.0.0.1:27017/scatch"; // fallback
+  }
 }
+
+console.log("Attempting to connect to MongoDB...");
 
 mongoose
 //pehle mongoose connect krne bolega
-.connect(mongoURI)
+.connect(mongoURI, {
+  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of 30
+})
 
 //agr connect hogya then
 .then(function(){
+    console.log("✅ Connected to MongoDB successfully");
     dbgr("connected to MongoDB")
 })
 
 //agar connect nahi ho rha hai
 .catch(function(err){
-    console.error("MongoDB connection error:", err);
+    console.error("❌ MongoDB connection error:", err.message);
     dbgr(err);                                   
 })
 

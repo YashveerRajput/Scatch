@@ -38,6 +38,19 @@ app.use(express.static(path.join(__dirname, "public")));
 //ejs ka view engine setup kiya
 app.set("view engine", "ejs");
 
+// Health check route for debugging
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "Server is running",
+    env: {
+      hasMongoURI: !!process.env.MONGODB_URI,
+      hasSessionSecret: !!process.env.EXPRESS_SESSION_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    }
+  });
+});
+
 app.use("/",indexRouter);
 app.use("/owners",ownersRouter);
 app.use("/products",productsRouter);
