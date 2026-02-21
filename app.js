@@ -56,5 +56,13 @@ app.use("/owners",ownersRouter);
 app.use("/products",productsRouter);
 app.use("/users",usersRouter);
 
+// Start server for local development
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  });
+}
+
 // Export the app for Vercel serverless deployment
 module.exports = app;
