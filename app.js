@@ -37,6 +37,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 //ejs ka view engine setup kiya
 app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views")); // Explicitly set views directory for Vercel
 
 // Health check route for debugging
 app.get("/api/health", (req, res) => {
