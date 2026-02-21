@@ -39,4 +39,5 @@ app.use("/owners",ownersRouter);
 app.use("/products",productsRouter);
 app.use("/users",usersRouter);
 
-app.listen(3000);
+// Export the app for Vercel serverless deployment
+module.exports = app;
