@@ -3,7 +3,7 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const path = require("path");
 require("dotenv").config();
-const db = require("./config/mongoose-connection")
+const { connectDB, getConnectionState } = require("./config/mongoose-connection")
 const expressSession = require("express-session");
 const flash = require("connect-flash")
 
@@ -34,15 +34,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Ensure DB is ready before any route handler touches mongoose models.
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(503).send("Database connection failed. Please try again.");
+  }
+});
+
 //ejs ka view engine setup kiya
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views")); // Explicitly set views directory for Vercel
 
 // Health check route for debugging
 app.get("/api/health", (req, res) => {
+  const dbStates = ["disconnected", "connected", "connecting", "disconnecting"];
+
   res.json({ 
     status: "OK", 
     message: "Server is running",
+    dbState: dbStates[getConnectionState()] || "unknown",
     env: {
       hasMongoURI: !!process.env.MONGODB_URI,
       hasSessionSecret: !!process.env.EXPRESS_SESSION_SECRET,

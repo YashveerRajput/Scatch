@@ -2,58 +2,60 @@ const mongoose = require('mongoose')
 //("development:mongoose") isme apn kuch bhi likh skte hain , yeh bus name hai
 const dbgr = require("debug")("development:mongoose")
 
-function buildMongoURI(rawURI, dbName) {
-  if (!rawURI) return "";
-
-  const uri = rawURI.trim();
-  const hasQuery = uri.includes("?");
-
-  // If a database path already exists, use it as-is.
-  if (/^mongodb(\+srv)?:\/\/[^/]+\/.+/.test(uri)) {
-    return uri;
+function getMongoURI() {
+  if (process.env.MONGODB_URI) {
+    return process.env.MONGODB_URI.trim();
   }
 
-  // Avoid producing "//dbname" when env var ends with '/'.
-  const base = uri.replace(/\/+$/, "");
-  return hasQuery ? uri : `${base}/${dbName}`;
-}
-
-// MongoDB connection - works for both local development and cloud (Vercel)
-let mongoURI;
-
-if (process.env.MONGODB_URI) {
-  // Cloud deployment (Vercel) - use environment variable
-  mongoURI = buildMongoURI(process.env.MONGODB_URI, "scatch");
-} else {
-  // Local development - use config file
   try {
     const config = require('config');
-    mongoURI = buildMongoURI(config.get("MONGODB_URI"), "scatch");
+    return config.get("MONGODB_URI").trim();
   } catch (err) {
     console.error("Config error - MongoDB URI not found");
-    mongoURI = "mongodb://127.0.0.1:27017/scatch"; // fallback
+    return "mongodb://127.0.0.1:27017";
   }
 }
 
-console.log("Attempting to connect to MongoDB...");
+const mongoURI = getMongoURI();
+const dbName = process.env.MONGODB_DB || "scatch";
+let cachedConnectPromise = null;
 
-mongoose
-//pehle mongoose connect krne bolega
-.connect(mongoURI, {
-  serverSelectionTimeoutMS: 10000,
-})
+function connectDB() {
+  if (mongoose.connection.readyState === 1) {
+    return Promise.resolve(mongoose.connection);
+  }
 
-//agr connect hogya then
-.then(function(){
-    console.log("✅ Connected to MongoDB successfully");
-    dbgr("connected to MongoDB")
-})
+  if (cachedConnectPromise) {
+    return cachedConnectPromise;
+  }
 
-//agar connect nahi ho rha hai
-.catch(function(err){
-    console.error("❌ MongoDB connection error:", err.message);
-    dbgr(err);                                   
-})
+  console.log("Attempting to connect to MongoDB...");
+  cachedConnectPromise = mongoose
+    .connect(mongoURI, {
+      dbName,
+      serverSelectionTimeoutMS: 10000,
+    })
+    .then(function () {
+      console.log("✅ Connected to MongoDB successfully");
+      dbgr("connected to MongoDB")
+      return mongoose.connection;
+    })
+    .catch(function (err) {
+      cachedConnectPromise = null;
+      console.error("❌ MongoDB connection error:", err.message);
+      dbgr(err);
+      throw err;
+    });
 
-// to run the server and connection then we will export the model
-module.exports = mongoose.connection
+  return cachedConnectPromise;
+}
+
+function getConnectionState() {
+  return mongoose.connection.readyState;
+}
+
+module.exports = {
+  connectDB,
+  getConnectionState,
+  connection: mongoose.connection,
+}
