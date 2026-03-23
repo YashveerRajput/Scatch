@@ -2,17 +2,33 @@ const mongoose = require('mongoose')
 //("development:mongoose") isme apn kuch bhi likh skte hain , yeh bus name hai
 const dbgr = require("debug")("development:mongoose")
 
+function buildMongoURI(rawURI, dbName) {
+  if (!rawURI) return "";
+
+  const uri = rawURI.trim();
+  const hasQuery = uri.includes("?");
+
+  // If a database path already exists, use it as-is.
+  if (/^mongodb(\+srv)?:\/\/[^/]+\/.+/.test(uri)) {
+    return uri;
+  }
+
+  // Avoid producing "//dbname" when env var ends with '/'.
+  const base = uri.replace(/\/+$/, "");
+  return hasQuery ? uri : `${base}/${dbName}`;
+}
+
 // MongoDB connection - works for both local development and cloud (Vercel)
 let mongoURI;
 
 if (process.env.MONGODB_URI) {
   // Cloud deployment (Vercel) - use environment variable
-  mongoURI = `${process.env.MONGODB_URI}/scatch`;
+  mongoURI = buildMongoURI(process.env.MONGODB_URI, "scatch");
 } else {
   // Local development - use config file
   try {
     const config = require('config');
-    mongoURI = `${config.get("MONGODB_URI")}/scatch`;
+    mongoURI = buildMongoURI(config.get("MONGODB_URI"), "scatch");
   } catch (err) {
     console.error("Config error - MongoDB URI not found");
     mongoURI = "mongodb://127.0.0.1:27017/scatch"; // fallback
@@ -24,7 +40,7 @@ console.log("Attempting to connect to MongoDB...");
 mongoose
 //pehle mongoose connect krne bolega
 .connect(mongoURI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of 30
+  serverSelectionTimeoutMS: 10000,
 })
 
 //agr connect hogya then
