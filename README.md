@@ -2,6 +2,8 @@
 
 Scatch is a modern, full-stack e-commerce platform built with Node.js and Express. It features a sleek design, robust authentication, and a seamless shopping experience for both users and administrators.
 
+Live Demo - https://scatch-azure.vercel.app/
+
 ![Banner](public/images/readme/home.png)
 
 ## 🚀 Features
