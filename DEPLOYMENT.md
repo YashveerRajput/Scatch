@@ -1,8 +1,6 @@
 # Vercel Deployment Guide
 
-## ✅ Code Changes Completed
-
-Your app is now configured for serverless deployment on Vercel!
+App is now configured for serverless deployment on Vercel!
 
 ### What was fixed:
 1. ✅ Changed `app.listen()` to `module.exports = app`
